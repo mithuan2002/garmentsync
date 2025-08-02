@@ -10,17 +10,14 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { CheckCircle, Link as LinkIcon, Package } from "lucide-react";
+import { insertOrderSchema } from "@shared/schema";
 
-const orderSchema = z.object({
-  id: z.string().min(1, "Order ID is required"),
-  buyerName: z.string().min(1, "Buyer name is required"),
-  styleNumber: z.string().min(1, "Style number is required"),
-  quantity: z.number().min(1, "Quantity must be at least 1"),
+// Form schema that extends the insert schema to handle form data
+const formOrderSchema = insertOrderSchema.extend({
   estimatedDelivery: z.string().min(1, "Estimated delivery date is required"),
-  buyerEmail: z.string().email("Valid email is required"),
 });
 
-type OrderFormData = z.infer<typeof orderSchema>;
+type OrderFormData = z.infer<typeof formOrderSchema>;
 
 export default function NewOrder() {
   const [orderCreated, setOrderCreated] = useState<string | null>(null);
@@ -32,7 +29,7 @@ export default function NewOrder() {
     formState: { errors },
     reset,
   } = useForm<OrderFormData>({
-    resolver: zodResolver(orderSchema),
+    resolver: zodResolver(formOrderSchema),
   });
 
   const createOrderMutation = useMutation({

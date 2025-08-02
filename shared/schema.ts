@@ -22,8 +22,16 @@ export const updates = pgTable("updates", {
 });
 
 // Insert schemas
-export const insertOrderSchema = createInsertSchema(orders).omit({
-  createdAt: true,
+export const insertOrderSchema = z.object({
+  id: z.string().min(1),
+  buyerName: z.string().min(1),
+  styleNumber: z.string().min(1),
+  quantity: z.number().int().positive(),
+  estimatedDelivery: z.union([z.date(), z.string().datetime()]).transform((val) => {
+    return typeof val === 'string' ? new Date(val) : val;
+  }),
+  buyerEmail: z.string().email(),
+  status: z.string().optional(),
 });
 
 export const insertUpdateSchema = createInsertSchema(updates).omit({
