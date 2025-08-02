@@ -147,6 +147,60 @@ If you have any questions, please contact ${inviterName}.
 
     await this.sendNotification([recipientEmail], subject, htmlContent, textContent);
   }
+
+  async sendNotificationReply(to: string, subject: string, message: string): Promise<void> {
+    if (!this.client) {
+      console.log("Email service not initialized - would send reply:", { to, subject, message });
+      return;
+    }
+
+    try {
+      const msg = {
+        to,
+        from: "admin@garmentfactory.com",
+        subject,
+        text: message,
+        html: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #2563eb;">GarmentSync Reply</h2>
+          <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <p style="margin: 0; line-height: 1.6; color: #374151;">${message.replace(/\n/g, '<br>')}</p>
+          </div>
+          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; text-align: center; color: #6b7280; font-size: 14px;">
+            <p>This message was sent via GarmentSync Manufacturing Platform</p>
+          </div>
+        </div>`,
+      };
+
+      await this.client.send(msg);
+      console.log("Reply sent successfully to:", to);
+    } catch (error) {
+      console.error("Failed to send reply:", error);
+      throw error;
+    }
+  }
+
+  private async sendNotification(emails: string[], subject: string, htmlContent: string, textContent: string): Promise<void> {
+    if (!this.client) {
+      console.log("Email service not initialized - would send notification:", { emails, subject, textContent });
+      return;
+    }
+
+    try {
+      const msg = {
+        to: emails,
+        from: "notifications@garmentfactory.com",
+        subject,
+        text: textContent,
+        html: htmlContent,
+      };
+
+      await this.client.sendMultiple(msg);
+      console.log("Notification sent successfully to:", emails);
+    } catch (error) {
+      console.error("Failed to send notification:", error);
+      throw error;
+    }
+  }
 }
 
 export const emailService = new EmailService();

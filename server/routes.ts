@@ -288,6 +288,126 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Notifications routes
+  app.get("/api/notifications", async (req, res) => {
+    try {
+      // For demo purposes, return mock notifications
+      // In production, this would fetch from database
+      const notifications = [
+        {
+          id: "notif-1",
+          type: "email",
+          title: "New order inquiry from Fashion Forward Inc.",
+          message: "Hello, we're interested in placing a new order for our Spring collection. Could we schedule a call to discuss details?",
+          from: "orders@fashionforward.com",
+          to: "admin@garmentfactory.com", 
+          orderId: "ORD-001",
+          isRead: false,
+          createdAt: new Date().toISOString(),
+          emailId: "email-1"
+        },
+        {
+          id: "notif-2",
+          type: "order_update",
+          title: "Order ORD-001 status updated",
+          message: "Order status has been updated to 'In Production'. Estimated completion date: March 15, 2024.",
+          from: "system@garmentfactory.com",
+          to: "orders@fashionforward.com",
+          orderId: "ORD-001", 
+          isRead: true,
+          createdAt: new Date(Date.now() - 86400000).toISOString()
+        }
+      ];
+      res.json(notifications);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch notifications" });
+    }
+  });
+
+  app.patch("/api/notifications/:id/read", async (req, res) => {
+    try {
+      // In production, update the notification read status in database
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to mark notification as read" });
+    }
+  });
+
+  app.post("/api/notifications/:id/reply", async (req, res) => {
+    try {
+      const { subject, message, to } = req.body;
+      
+      // Send reply email using email service
+      await emailService.sendNotificationReply(to, subject, message);
+      
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to send reply" });
+    }
+  });
+
+  // Media routes
+  app.get("/api/media", async (req, res) => {
+    try {
+      // For demo purposes, return mock media files
+      // In production, this would fetch from database
+      const mediaFiles = [
+        {
+          id: "media-1",
+          orderId: "ORD-001",
+          filename: "product_photo_1.jpg",
+          originalName: "fashion_forward_sample_1.jpg",
+          size: 2457600,
+          mimeType: "image/jpeg",
+          url: "/uploads/product_photo_1.jpg",
+          uploadedBy: "admin@garmentfactory.com",
+          uploadedAt: new Date().toISOString(),
+          category: "product_photos",
+          description: "Sample product photos for Spring collection"
+        },
+        {
+          id: "media-2", 
+          orderId: "ORD-001",
+          filename: "tech_spec.pdf",
+          originalName: "technical_specifications.pdf",
+          size: 1024000,
+          mimeType: "application/pdf",
+          url: "/uploads/tech_spec.pdf",
+          uploadedBy: "designer@garmentfactory.com",
+          uploadedAt: new Date(Date.now() - 3600000).toISOString(),
+          category: "specifications",
+          description: "Technical specifications and measurements"
+        }
+      ];
+      res.json(mediaFiles);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch media files" });
+    }
+  });
+
+  app.post("/api/media/upload", async (req, res) => {
+    try {
+      // In production, handle file upload using multer or similar
+      // For demo, return success response
+      res.json({ 
+        success: true,
+        message: "Files uploaded successfully",
+        files: []
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to upload files" });
+    }
+  });
+
+  app.delete("/api/media/:id", async (req, res) => {
+    try {
+      // In production, delete file from storage and database
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete file" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

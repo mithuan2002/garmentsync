@@ -2,20 +2,36 @@
 
 ## Overview
 
-GarmentSync is a modern web application designed to streamline communication and project management between manufacturers and buyers in the garment industry. The platform provides real-time project tracking, file sharing capabilities, and collaborative communication tools to enhance transparency and efficiency in manufacturing workflows.
+GarmentSync is a comprehensive manufacturing communication platform designed to streamline workflows between manufacturers and buyers in the garment industry. The platform features a modern 3-tab navigation system providing complete order management, notification handling, and media storage capabilities.
 
 ## Current Implementation Status (August 2025)
 
-The application has been simplified into a focused collaborative communication platform with the following features:
-- ✓ Clean order creation workflow with unique order IDs and shareable public links
-- ✓ Collaborative comment system allowing both manufacturers and buyers to communicate
-- ✓ Real-time update posting with author attribution and role identification
-- ✓ Combined communication timeline showing both updates and comments chronologically
-- ✓ Role-based messaging (Manufacturer vs Buyer perspectives with visual differentiation)
-- ✓ Order detail view accessible via public links for transparent communication
-- ✓ Responsive design optimized for both desktop and mobile devices
+The application has been successfully restructured into a comprehensive 3-tab platform with the following features:
 
-The application successfully provides a streamlined MicroSaaS solution for garment manufacturing communication, focusing on collaborative order tracking and transparent stakeholder communication without complex dashboards or analytics.
+### Tab 1: Orders Management
+- ✓ Clean order creation workflow with unique order IDs and shareable public links
+- ✓ Comprehensive stakeholder management system with bulk email invitation functionality
+- ✓ Role-based permissions (admin, factory_owner, factory_manager, buyer, buyer_employee)
+- ✓ Order search and filtering capabilities
+- ✓ Real-time order status tracking with visual status indicators
+- ✓ Integrated stakeholder collaboration on each order
+
+### Tab 2: Notifications
+- ✓ Push notification details and email management
+- ✓ In-app email reply functionality with rich HTML formatting
+- ✓ Notification categorization (email, system, order_update)
+- ✓ Read/unread status tracking
+- ✓ Direct reply interface for seamless communication
+
+### Tab 3: Media Management
+- ✓ Product-related media storage and access
+- ✓ File categorization (product_photos, technical_drawings, specifications, samples)
+- ✓ Multi-file upload with drag-and-drop support
+- ✓ Order-based media organization
+- ✓ File preview and download capabilities
+- ✓ Advanced search and filtering by category and order
+
+The platform now provides a complete manufacturing communication ecosystem with stakeholder management, notification handling, and media organization all integrated into a unified interface.
 
 ## User Preferences
 
