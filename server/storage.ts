@@ -1,4 +1,4 @@
-import { type Order, type InsertOrder, type Update, type InsertUpdate } from "@shared/schema";
+import { type Order, type InsertOrder, type Update, type InsertUpdate, type Comment, type InsertComment } from "@shared/schema";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
@@ -11,15 +11,21 @@ export interface IStorage {
   // Updates
   getUpdatesByOrder(orderId: string): Promise<Update[]>;
   createUpdate(update: InsertUpdate): Promise<Update>;
+  
+  // Comments
+  getCommentsByOrder(orderId: string): Promise<Comment[]>;
+  createComment(comment: InsertComment): Promise<Comment>;
 }
 
 export class MemStorage implements IStorage {
   private orders: Map<string, Order>;
   private updates: Map<string, Update>;
+  private comments: Map<string, Comment>;
 
   constructor() {
     this.orders = new Map();
     this.updates = new Map();
+    this.comments = new Map();
     
     // Seed with demo data
     this.seedData();
@@ -51,6 +57,28 @@ export class MemStorage implements IStorage {
 
     this.orders.set(order1.id, order1);
     this.orders.set(order2.id, order2);
+
+    // Seed some demo updates and comments
+    const update1: Update = {
+      id: "update-1",
+      orderId: "ORD-001",
+      message: "Production has started. Fabric cutting is complete.",
+      authorName: "Sarah Chen",
+      authorRole: "manufacturer",
+      createdAt: new Date("2024-01-12"),
+    };
+
+    const comment1: Comment = {
+      id: "comment-1",
+      orderId: "ORD-001", 
+      message: "Looking great! Can we get photos of the fabric quality?",
+      authorName: "Mike Johnson",
+      authorRole: "buyer",
+      createdAt: new Date("2024-01-13"),
+    };
+
+    this.updates.set(update1.id, update1);
+    this.comments.set(comment1.id, comment1);
   }
 
   // Orders
@@ -102,6 +130,24 @@ export class MemStorage implements IStorage {
     };
     this.updates.set(id, update);
     return update;
+  }
+
+  // Comments
+  async getCommentsByOrder(orderId: string): Promise<Comment[]> {
+    return Array.from(this.comments.values())
+      .filter(comment => comment.orderId === orderId)
+      .sort((a, b) => a.createdAt!.getTime() - b.createdAt!.getTime());
+  }
+
+  async createComment(insertComment: InsertComment): Promise<Comment> {
+    const id = randomUUID();
+    const comment: Comment = {
+      ...insertComment,
+      id,
+      createdAt: new Date(),
+    };
+    this.comments.set(id, comment);
+    return comment;
   }
 }
 

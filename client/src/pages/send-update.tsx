@@ -6,6 +6,7 @@ import { z } from "zod";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
@@ -15,6 +16,8 @@ import { Send, CheckCircle, Package } from "lucide-react";
 const updateSchema = z.object({
   orderId: z.string().min(1, "Please select an order"),
   message: z.string().min(1, "Update message is required"),
+  authorName: z.string().min(1, "Name is required"),
+  authorRole: z.enum(['manufacturer', 'buyer']),
 });
 
 type UpdateFormData = z.infer<typeof updateSchema>;
@@ -52,6 +55,8 @@ export default function SendUpdate() {
     mutationFn: async (data: UpdateFormData) => {
       const response = await apiRequest("POST", `/api/orders/${data.orderId}/updates`, {
         message: data.message,
+        authorName: data.authorName,
+        authorRole: data.authorRole,
       });
       return response.json();
     },
@@ -126,6 +131,37 @@ export default function SendUpdate() {
                 {errors.orderId && (
                   <p className="text-sm text-red-500 mt-1">{errors.orderId.message}</p>
                 )}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="authorName">Your Name</Label>
+                  <Input
+                    id="authorName"
+                    {...register("authorName")}
+                    placeholder="Enter your name"
+                    className="mt-1"
+                  />
+                  {errors.authorName && (
+                    <p className="text-sm text-red-500 mt-1">{errors.authorName.message}</p>
+                  )}
+                </div>
+                
+                <div>
+                  <Label htmlFor="role-select">Your Role</Label>
+                  <Select onValueChange={(value) => setValue("authorRole", value as "manufacturer" | "buyer")}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Select your role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="manufacturer">Manufacturer</SelectItem>
+                      <SelectItem value="buyer">Buyer</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {errors.authorRole && (
+                    <p className="text-sm text-red-500 mt-1">{errors.authorRole.message}</p>
+                  )}
+                </div>
               </div>
 
               {selectedOrder && (

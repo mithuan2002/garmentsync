@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertOrderSchema, insertUpdateSchema } from "@shared/schema";
+import { insertOrderSchema, insertUpdateSchema, insertCommentSchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -24,10 +24,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const updates = await storage.getUpdatesByOrder(order.id);
+      const comments = await storage.getCommentsByOrder(order.id);
 
       res.json({
         ...order,
         updates,
+        comments,
       });
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch order" });
@@ -79,6 +81,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid data", errors: error.errors });
       }
       res.status(500).json({ message: "Failed to add update" });
+    }
+  });
+
+  // Add comment to order
+  app.post("/api/orders/:id/comments", async (req, res) => {
+    try {
+      const validatedData = insertCommentSchema.parse({
+        ...req.body,
+        orderId: req.params.id,
+      });
+      
+      const comment = await storage.createComment(validatedData);
+      res.status(201).json(comment);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to add comment" });
     }
   });
 
