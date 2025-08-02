@@ -32,6 +32,16 @@ export const comments = pgTable("comments", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const stakeholders = pgTable("stakeholders", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  orderId: varchar("order_id").notNull(),
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  role: text("role").notNull(), // 'admin' | 'factory_owner' | 'factory_manager' | 'buyer' | 'buyer_employee'
+  permissions: text("permissions").notNull().default("read"), // 'read' | 'comment' | 'update'
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Insert schemas
 export const insertOrderSchema = z.object({
   id: z.string().min(1),
@@ -59,6 +69,14 @@ export const insertCommentSchema = z.object({
   authorRole: z.enum(['manufacturer', 'buyer']),
 });
 
+export const insertStakeholderSchema = z.object({
+  orderId: z.string().min(1),
+  name: z.string().min(1),
+  email: z.string().email(),
+  role: z.enum(['admin', 'factory_owner', 'factory_manager', 'buyer', 'buyer_employee']),
+  permissions: z.enum(['read', 'comment', 'update']).default('read'),
+});
+
 // Types
 export type Order = typeof orders.$inferSelect;
 export type InsertOrder = z.infer<typeof insertOrderSchema>;
@@ -66,3 +84,5 @@ export type Update = typeof updates.$inferSelect;
 export type InsertUpdate = z.infer<typeof insertUpdateSchema>;
 export type Comment = typeof comments.$inferSelect;
 export type InsertComment = z.infer<typeof insertCommentSchema>;
+export type Stakeholder = typeof stakeholders.$inferSelect;
+export type InsertStakeholder = z.infer<typeof insertStakeholderSchema>;

@@ -1,7 +1,8 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertOrderSchema, insertUpdateSchema, insertCommentSchema } from "@shared/schema";
+import { insertOrderSchema, insertUpdateSchema, insertCommentSchema, insertStakeholderSchema } from "@shared/schema";
+import { emailService } from "./email-service";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -25,11 +26,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const updates = await storage.getUpdatesByOrder(order.id);
       const comments = await storage.getCommentsByOrder(order.id);
+      const stakeholders = await storage.getStakeholdersByOrder(order.id);
 
       res.json({
         ...order,
         updates,
         comments,
+        stakeholders,
       });
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch order" });
@@ -75,6 +78,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       const update = await storage.createUpdate(validatedData);
+      
+      // Send email notifications to stakeholders
+      const order = await storage.getOrder(req.params.id);
+      const stakeholders = await storage.getStakeholdersByOrder(req.params.id);
+      
+      if (order && stakeholders.length > 0) {
+        const stakeholderEmails = stakeholders.map(s => s.email);
+        await emailService.notifyStakeholders(
+          stakeholderEmails,
+          { id: order.id, buyerName: order.buyerName, styleNumber: order.styleNumber },
+          { type: 'update', message: update.message, authorName: update.authorName, authorRole: update.authorRole }
+        );
+      }
+      
       res.status(201).json(update);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -93,12 +110,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       const comment = await storage.createComment(validatedData);
+      
+      // Send email notifications to stakeholders
+      const order = await storage.getOrder(req.params.id);
+      const stakeholders = await storage.getStakeholdersByOrder(req.params.id);
+      
+      if (order && stakeholders.length > 0) {
+        const stakeholderEmails = stakeholders.map(s => s.email);
+        await emailService.notifyStakeholders(
+          stakeholderEmails,
+          { id: order.id, buyerName: order.buyerName, styleNumber: order.styleNumber },
+          { type: 'comment', message: comment.message, authorName: comment.authorName, authorRole: comment.authorRole }
+        );
+      }
+      
       res.status(201).json(comment);
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid data", errors: error.errors });
       }
       res.status(500).json({ message: "Failed to add comment" });
+    }
+  });
+
+  // Stakeholder management routes
+  app.get("/api/orders/:id/stakeholders", async (req, res) => {
+    try {
+      const stakeholders = await storage.getStakeholdersByOrder(req.params.id);
+      res.json(stakeholders);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch stakeholders" });
+    }
+  });
+
+  app.post("/api/orders/:id/stakeholders", async (req, res) => {
+    try {
+      const validatedData = insertStakeholderSchema.parse({
+        ...req.body,
+        orderId: req.params.id,
+      });
+      
+      const stakeholder = await storage.createStakeholder(validatedData);
+      res.status(201).json(stakeholder);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to add stakeholder" });
+    }
+  });
+
+  app.delete("/api/stakeholders/:id", async (req, res) => {
+    try {
+      const deleted = await storage.deleteStakeholder(req.params.id);
+      if (!deleted) {
+        return res.status(404).json({ message: "Stakeholder not found" });
+      }
+      res.json({ message: "Stakeholder deleted successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete stakeholder" });
+    }
+  });
+
+  app.patch("/api/stakeholders/:id/permissions", async (req, res) => {
+    try {
+      const { permissions } = req.body;
+      const stakeholder = await storage.updateStakeholderPermissions(req.params.id, permissions);
+      
+      if (!stakeholder) {
+        return res.status(404).json({ message: "Stakeholder not found" });
+      }
+
+      res.json(stakeholder);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update stakeholder permissions" });
     }
   });
 

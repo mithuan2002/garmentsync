@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Calendar, Package2, Mail, User, Clock, MessageSquare, Send } from "lucide-react";
+import StakeholderManagement from "@/components/stakeholder-management";
 
 interface OrderData {
   id: string;
@@ -25,6 +26,7 @@ interface OrderData {
   createdAt: string;
   updates: UpdateData[];
   comments: CommentData[];
+  stakeholders: StakeholderData[];
 }
 
 interface UpdateData {
@@ -40,6 +42,15 @@ interface CommentData {
   message: string;
   authorName: string;
   authorRole: string;
+  createdAt: string;
+}
+
+interface StakeholderData {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  permissions: string;
   createdAt: string;
 }
 
@@ -172,7 +183,13 @@ export default function OrderDetail() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
-            <Card>
+            {/* Stakeholder Management */}
+            <StakeholderManagement 
+              orderId={order.id}
+              stakeholders={order.stakeholders || []}
+              currentUserRole="admin" // This should come from user context
+            /></div>
+            <Card className="mt-6">
               <CardHeader>
                 <CardTitle>Order Details</CardTitle>
               </CardHeader>

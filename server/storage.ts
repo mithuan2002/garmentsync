@@ -1,4 +1,4 @@
-import { type Order, type InsertOrder, type Update, type InsertUpdate, type Comment, type InsertComment } from "@shared/schema";
+import { type Order, type Update, type Comment, type Stakeholder, type InsertOrder, type InsertUpdate, type InsertComment, type InsertStakeholder } from "@shared/schema";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
@@ -7,11 +7,11 @@ export interface IStorage {
   getAllOrders(): Promise<Order[]>;
   createOrder(order: InsertOrder): Promise<Order>;
   updateOrderStatus(id: string, status: string): Promise<Order | undefined>;
-  
+
   // Updates
   getUpdatesByOrder(orderId: string): Promise<Update[]>;
   createUpdate(update: InsertUpdate): Promise<Update>;
-  
+
   // Comments
   getCommentsByOrder(orderId: string): Promise<Comment[]>;
   createComment(comment: InsertComment): Promise<Comment>;
@@ -21,12 +21,14 @@ export class MemStorage implements IStorage {
   private orders: Map<string, Order>;
   private updates: Map<string, Update>;
   private comments: Map<string, Comment>;
+  private stakeholders: Map<string, Stakeholder>;
 
   constructor() {
     this.orders = new Map();
     this.updates = new Map();
     this.comments = new Map();
-    
+    this.stakeholders = new Map();
+
     // Seed with demo data
     this.seedData();
   }
