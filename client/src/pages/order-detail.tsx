@@ -188,7 +188,9 @@ export default function OrderDetail() {
               orderId={order.id}
               stakeholders={order.stakeholders || []}
               currentUserRole="admin" // This should come from user context
-            /></div>
+            />
+
+            {/* Order Details */}</div>
             <Card className="mt-6">
               <CardHeader>
                 <CardTitle>Order Details</CardTitle>
