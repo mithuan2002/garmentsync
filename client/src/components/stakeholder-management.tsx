@@ -54,6 +54,9 @@ export default function StakeholderManagement({ orderId, stakeholders, currentUs
   const queryClient = useQueryClient();
 
   const isAdmin = currentUserRole === 'admin';
+  
+  // Debug logging
+  console.log('StakeholderManagement rendered:', { orderId, currentUserRole, isAdmin, stakeholders: stakeholders?.length });
 
   const {
     register,
