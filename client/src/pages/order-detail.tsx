@@ -190,7 +190,7 @@ export default function OrderDetail() {
               currentUserRole="admin" // This should come from user context
             />
 
-            {/* Order Details */}</div>
+            {/* Order Details */}
             <Card className="mt-6">
               <CardHeader>
                 <CardTitle>Order Details</CardTitle>
