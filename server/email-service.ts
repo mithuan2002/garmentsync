@@ -72,20 +72,72 @@ class EmailService {
       <p><a href="${process.env.APP_URL || 'http://localhost:5000'}/order/${orderInfo.id}">View Order Details</a></p>
     `;
 
-    const textContent = `
-      Order Update Notification
-      
-      Order ID: ${orderInfo.id}
-      Buyer: ${orderInfo.buyerName}
-      Style Number: ${orderInfo.styleNumber}
-      
-      New ${notification.type} from ${notification.authorName} (${notification.authorRole}):
-      ${notification.message}
-      
-      View order details: ${process.env.APP_URL || 'http://localhost:5000'}/order/${orderInfo.id}
+    const textContent = `Order Update Notification
+Order ID: ${orderInfo.id}
+Buyer: ${orderInfo.buyerName}
+Style Number: ${orderInfo.styleNumber}
+
+New ${notification.type} from ${notification.authorName} (${notification.authorRole}):
+${notification.message}
+
+View Order Details: ${process.env.APP_URL || 'http://localhost:5000'}/order/${orderInfo.id}
     `;
 
     await this.sendNotification(stakeholderEmails, subject, htmlContent, textContent);
+  }
+
+  async sendStakeholderInvitation(
+    recipientEmail: string,
+    recipientName: string,
+    orderInfo: { id: string; buyerName: string; styleNumber: string },
+    inviterName: string,
+    role: string,
+    permissions: string
+  ): Promise<void> {
+    const subject = `Invitation to collaborate on Order ${orderInfo.id}`;
+    
+    const htmlContent = `
+      <h2>You've been invited to collaborate on an order</h2>
+      <p>Hello ${recipientName},</p>
+      <p><strong>${inviterName}</strong> has invited you to collaborate on the following order:</p>
+      
+      <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <p><strong>Order ID:</strong> ${orderInfo.id}</p>
+        <p><strong>Buyer:</strong> ${orderInfo.buyerName}</p>
+        <p><strong>Style Number:</strong> ${orderInfo.styleNumber}</p>
+        <p><strong>Your Role:</strong> ${role}</p>
+        <p><strong>Permissions:</strong> ${permissions}</p>
+      </div>
+
+      <p>You can now track progress, add comments, and collaborate on this order.</p>
+      <p><a href="${process.env.APP_URL || 'http://localhost:5000'}/order/${orderInfo.id}" 
+         style="background-color: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;">
+         View Order Details
+      </a></p>
+      
+      <p>If you have any questions, please contact ${inviterName}.</p>
+    `;
+
+    const textContent = `You've been invited to collaborate on an order
+
+Hello ${recipientName},
+
+${inviterName} has invited you to collaborate on the following order:
+
+Order ID: ${orderInfo.id}
+Buyer: ${orderInfo.buyerName}
+Style Number: ${orderInfo.styleNumber}
+Your Role: ${role}
+Permissions: ${permissions}
+
+You can now track progress, add comments, and collaborate on this order.
+
+View Order Details: ${process.env.APP_URL || 'http://localhost:5000'}/order/${orderInfo.id}
+
+If you have any questions, please contact ${inviterName}.
+    `;
+
+    await this.sendNotification([recipientEmail], subject, htmlContent, textContent);
   }
 }
 

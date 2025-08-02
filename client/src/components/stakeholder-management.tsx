@@ -56,7 +56,7 @@ export default function StakeholderManagement({ orderId, stakeholders, currentUs
   });
 
   const addStakeholderMutation = useMutation({
-    mutationFn: async (data: StakeholderFormData) => {
+    mutationFn: async (data: StakeholderFormData & { inviterName?: string }) => {
       const response = await apiRequest("POST", `/api/orders/${orderId}/stakeholders`, data);
       return response.json();
     },
@@ -121,7 +121,10 @@ export default function StakeholderManagement({ orderId, stakeholders, currentUs
   });
 
   const onSubmit = (data: StakeholderFormData) => {
-    addStakeholderMutation.mutate(data);
+    addStakeholderMutation.mutate({
+      ...data,
+      inviterName: "System Admin" // This would normally come from current user context
+    });
   };
 
   const getRoleColor = (role: string) => {

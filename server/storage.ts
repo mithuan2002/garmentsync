@@ -15,6 +15,12 @@ export interface IStorage {
   // Comments
   getCommentsByOrder(orderId: string): Promise<Comment[]>;
   createComment(comment: InsertComment): Promise<Comment>;
+
+  // Stakeholders
+  getStakeholdersByOrder(orderId: string): Promise<Stakeholder[]>;
+  createStakeholder(stakeholder: InsertStakeholder): Promise<Stakeholder>;
+  deleteStakeholder(id: string): Promise<boolean>;
+  updateStakeholderPermissions(id: string, permissions: string): Promise<Stakeholder | undefined>;
 }
 
 export class MemStorage implements IStorage {
@@ -81,6 +87,30 @@ export class MemStorage implements IStorage {
 
     this.updates.set(update1.id, update1);
     this.comments.set(comment1.id, comment1);
+
+    // Seed some demo stakeholders
+    const stakeholder1: Stakeholder = {
+      id: "stakeholder-1",
+      orderId: "ORD-001",
+      name: "Sarah Chen",
+      email: "sarah.chen@garmentfactory.com",
+      role: "factory_manager",
+      permissions: "update",
+      createdAt: new Date("2024-01-10"),
+    };
+
+    const stakeholder2: Stakeholder = {
+      id: "stakeholder-2",
+      orderId: "ORD-001",
+      name: "Mike Johnson",
+      email: "mike.johnson@fashionforward.com",
+      role: "buyer",
+      permissions: "comment",
+      createdAt: new Date("2024-01-10"),
+    };
+
+    this.stakeholders.set(stakeholder1.id, stakeholder1);
+    this.stakeholders.set(stakeholder2.id, stakeholder2);
   }
 
   // Orders
@@ -150,6 +180,38 @@ export class MemStorage implements IStorage {
     };
     this.comments.set(id, comment);
     return comment;
+  }
+
+  // Stakeholders
+  async getStakeholdersByOrder(orderId: string): Promise<Stakeholder[]> {
+    return Array.from(this.stakeholders.values())
+      .filter(stakeholder => stakeholder.orderId === orderId)
+      .sort((a, b) => a.createdAt!.getTime() - b.createdAt!.getTime());
+  }
+
+  async createStakeholder(insertStakeholder: InsertStakeholder): Promise<Stakeholder> {
+    const id = randomUUID();
+    const stakeholder: Stakeholder = {
+      ...insertStakeholder,
+      id,
+      createdAt: new Date(),
+    };
+    this.stakeholders.set(id, stakeholder);
+    return stakeholder;
+  }
+
+  async deleteStakeholder(id: string): Promise<boolean> {
+    return this.stakeholders.delete(id);
+  }
+
+  async updateStakeholderPermissions(id: string, permissions: string): Promise<Stakeholder | undefined> {
+    const stakeholder = this.stakeholders.get(id);
+    if (stakeholder) {
+      stakeholder.permissions = permissions;
+      this.stakeholders.set(id, stakeholder);
+      return stakeholder;
+    }
+    return undefined;
   }
 }
 

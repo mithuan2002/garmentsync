@@ -151,6 +151,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       const stakeholder = await storage.createStakeholder(validatedData);
+      
+      // Send invitation email
+      const order = await storage.getOrder(req.params.id);
+      if (order) {
+        await emailService.sendStakeholderInvitation(
+          stakeholder.email,
+          stakeholder.name,
+          { id: order.id, buyerName: order.buyerName, styleNumber: order.styleNumber },
+          req.body.inviterName || "System Admin",
+          stakeholder.role,
+          stakeholder.permissions
+        );
+      }
+      
       res.status(201).json(stakeholder);
     } catch (error) {
       if (error instanceof z.ZodError) {
