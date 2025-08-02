@@ -174,6 +174,93 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Bulk invite stakeholders
+  app.post("/api/orders/:id/stakeholders/bulk-invite", async (req, res) => {
+    try {
+      const { emailList, defaultRole, defaultPermissions, message, inviterName } = req.body;
+      
+      // Parse email list (comma or newline separated)
+      const emails = emailList
+        .split(/[,\n]/)
+        .map((email: string) => email.trim())
+        .filter((email: string) => email.length > 0);
+      
+      if (emails.length === 0) {
+        return res.status(400).json({ message: "No valid emails provided" });
+      }
+
+      const order = await storage.getOrder(req.params.id);
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+
+      let successCount = 0;
+      let addedCount = 0;
+      const results = [];
+
+      for (const email of emails) {
+        try {
+          // Validate email format
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          if (!emailRegex.test(email)) {
+            results.push({ email, status: 'invalid', error: 'Invalid email format' });
+            continue;
+          }
+
+          // Check if stakeholder already exists
+          const existingStakeholders = await storage.getStakeholdersByOrder(req.params.id);
+          const exists = existingStakeholders.some(s => s.email === email);
+          
+          if (exists) {
+            results.push({ email, status: 'exists', error: 'Already a stakeholder' });
+            continue;
+          }
+
+          // Extract name from email (before @)
+          const name = email.split('@')[0].replace(/[._]/g, ' ').split(' ')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+
+          // Create stakeholder
+          const stakeholderData = {
+            orderId: req.params.id,
+            name,
+            email,
+            role: defaultRole,
+            permissions: defaultPermissions,
+          };
+
+          const stakeholder = await storage.createStakeholder(stakeholderData);
+          addedCount++;
+
+          // Send invitation email with custom message
+          await emailService.sendStakeholderInvitation(
+            stakeholder.email,
+            stakeholder.name,
+            { id: order.id, buyerName: order.buyerName, styleNumber: order.styleNumber },
+            inviterName || "System Admin",
+            stakeholder.role,
+            stakeholder.permissions,
+            message
+          );
+          successCount++;
+
+          results.push({ email, status: 'success', stakeholder });
+        } catch (error) {
+          results.push({ email, status: 'error', error: error instanceof Error ? error.message : 'Unknown error' });
+        }
+      }
+
+      res.status(201).json({
+        successCount,
+        addedCount,
+        totalEmails: emails.length,
+        results
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to process bulk invitations" });
+    }
+  });
+
   app.delete("/api/stakeholders/:id", async (req, res) => {
     try {
       const deleted = await storage.deleteStakeholder(req.params.id);

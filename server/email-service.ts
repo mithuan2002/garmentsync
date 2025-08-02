@@ -92,7 +92,8 @@ View Order Details: ${process.env.APP_URL || 'http://localhost:5000'}/order/${or
     orderInfo: { id: string; buyerName: string; styleNumber: string },
     inviterName: string,
     role: string,
-    permissions: string
+    permissions: string,
+    customMessage?: string
   ): Promise<void> {
     const subject = `Invitation to collaborate on Order ${orderInfo.id}`;
     
@@ -108,6 +109,11 @@ View Order Details: ${process.env.APP_URL || 'http://localhost:5000'}/order/${or
         <p><strong>Your Role:</strong> ${role}</p>
         <p><strong>Permissions:</strong> ${permissions}</p>
       </div>
+
+      ${customMessage ? `<div style="background-color: #fff3cd; padding: 15px; border-radius: 4px; margin: 15px 0; border-left: 4px solid #ffc107;">
+        <h4 style="margin: 0 0 10px 0; color: #856404;">Personal Message:</h4>
+        <p style="margin: 0; color: #856404;">${customMessage}</p>
+      </div>` : ''}
 
       <p>You can now track progress, add comments, and collaborate on this order.</p>
       <p><a href="${process.env.APP_URL || 'http://localhost:5000'}/order/${orderInfo.id}" 
@@ -130,7 +136,9 @@ Style Number: ${orderInfo.styleNumber}
 Your Role: ${role}
 Permissions: ${permissions}
 
-You can now track progress, add comments, and collaborate on this order.
+${customMessage ? `Personal Message: ${customMessage}
+
+` : ''}You can now track progress, add comments, and collaborate on this order.
 
 View Order Details: ${process.env.APP_URL || 'http://localhost:5000'}/order/${orderInfo.id}
 

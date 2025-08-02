@@ -10,9 +10,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Users, UserPlus, Trash2, Shield } from "lucide-react";
+import { Users, UserPlus, Trash2, Shield, Mail, Plus, X } from "lucide-react";
 
 interface Stakeholder {
   id: string;
@@ -36,10 +37,19 @@ const stakeholderSchema = z.object({
   permissions: z.enum(['read', 'comment', 'update']),
 });
 
+const bulkInviteSchema = z.object({
+  emailList: z.string().min(1, "Email list is required"),
+  defaultRole: z.enum(['admin', 'factory_owner', 'factory_manager', 'buyer', 'buyer_employee']),
+  defaultPermissions: z.enum(['read', 'comment', 'update']),
+  message: z.string().optional(),
+});
+
 type StakeholderFormData = z.infer<typeof stakeholderSchema>;
+type BulkInviteFormData = z.infer<typeof bulkInviteSchema>;
 
 export default function StakeholderManagement({ orderId, stakeholders, currentUserRole }: StakeholderManagementProps) {
   const [isAddingStakeholder, setIsAddingStakeholder] = useState(false);
+  const [isBulkInviting, setIsBulkInviting] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -53,6 +63,16 @@ export default function StakeholderManagement({ orderId, stakeholders, currentUs
     setValue,
   } = useForm<StakeholderFormData>({
     resolver: zodResolver(stakeholderSchema),
+  });
+
+  const {
+    register: registerBulk,
+    handleSubmit: handleSubmitBulk,
+    formState: { errors: errorsBulk },
+    reset: resetBulk,
+    setValue: setValueBulk,
+  } = useForm<BulkInviteFormData>({
+    resolver: zodResolver(bulkInviteSchema),
   });
 
   const addStakeholderMutation = useMutation({
@@ -120,11 +140,42 @@ export default function StakeholderManagement({ orderId, stakeholders, currentUs
     },
   });
 
+  const bulkInviteMutation = useMutation({
+    mutationFn: async (data: BulkInviteFormData) => {
+      const requestData = {
+        ...data,
+        inviterName: "System Admin" // This would normally come from current user context
+      };
+      const response = await apiRequest("POST", `/api/orders/${orderId}/stakeholders/bulk-invite`, requestData);
+      return response.json();
+    },
+    onSuccess: (result) => {
+      resetBulk();
+      setIsBulkInviting(false);
+      queryClient.invalidateQueries({ queryKey: ["/api/orders", orderId] });
+      toast({
+        title: "Invitations Sent",
+        description: `Successfully sent ${result.successCount} invitations and added ${result.addedCount} stakeholders.`,
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to send bulk invitations. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const onSubmit = (data: StakeholderFormData) => {
     addStakeholderMutation.mutate({
       ...data,
       inviterName: "System Admin" // This would normally come from current user context
     });
+  };
+
+  const onSubmitBulkInvite = (data: BulkInviteFormData) => {
+    bulkInviteMutation.mutate(data);
   };
 
   const getRoleColor = (role: string) => {
@@ -164,21 +215,151 @@ export default function StakeholderManagement({ orderId, stakeholders, currentUs
           <Users className="w-5 h-5" />
           <span>Stakeholders</span>
           {isAdmin && (
-            <Button
-              onClick={() => setIsAddingStakeholder(true)}
-              size="sm"
-              variant="outline"
-              className="ml-auto"
-            >
-              <UserPlus className="w-4 h-4 mr-2" />
-              Add Stakeholder
-            </Button>
+            <div className="ml-auto flex space-x-2">
+              <Button
+                onClick={() => setIsAddingStakeholder(true)}
+                size="sm"
+                variant="outline"
+              >
+                <UserPlus className="w-4 h-4 mr-2" />
+                Add One
+              </Button>
+              <Button
+                onClick={() => setIsBulkInviting(true)}
+                size="sm"
+                variant="outline"
+              >
+                <Mail className="w-4 h-4 mr-2" />
+                Bulk Invite
+              </Button>
+            </div>
           )}
         </CardTitle>
       </CardHeader>
       <CardContent>
+        {isBulkInviting && isAdmin && (
+          <div className="mb-6 p-4 border rounded-lg bg-blue-50">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-medium text-slate-900">Bulk Invite Stakeholders</h3>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setIsBulkInviting(false);
+                  resetBulk();
+                }}
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+            <form onSubmit={handleSubmitBulk(onSubmitBulkInvite)} className="space-y-4">
+              <div>
+                <Label htmlFor="emailList">Email Addresses</Label>
+                <Textarea
+                  id="emailList"
+                  {...registerBulk("emailList")}
+                  placeholder="Enter email addresses separated by commas or new lines&#10;e.g.:&#10;john@company.com, jane@company.com&#10;mike@company.com"
+                  rows={4}
+                  className="w-full"
+                />
+                <p className="text-sm text-slate-600 mt-1">
+                  Enter multiple email addresses separated by commas or new lines
+                </p>
+                {errorsBulk.emailList && (
+                  <p className="text-sm text-red-500 mt-1">{errorsBulk.emailList.message}</p>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label>Default Role</Label>
+                  <Select onValueChange={(value) => setValueBulk("defaultRole", value as any)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select default role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="admin">Admin</SelectItem>
+                      <SelectItem value="factory_owner">Factory Owner</SelectItem>
+                      <SelectItem value="factory_manager">Factory Manager</SelectItem>
+                      <SelectItem value="buyer">Buyer</SelectItem>
+                      <SelectItem value="buyer_employee">Buyer Employee</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {errorsBulk.defaultRole && (
+                    <p className="text-sm text-red-500 mt-1">{errorsBulk.defaultRole.message}</p>
+                  )}
+                </div>
+
+                <div>
+                  <Label>Default Permissions</Label>
+                  <Select onValueChange={(value) => setValueBulk("defaultPermissions", value as any)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select default permissions" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="read">Read Only</SelectItem>
+                      <SelectItem value="comment">Read & Comment</SelectItem>
+                      <SelectItem value="update">Read, Comment & Update</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {errorsBulk.defaultPermissions && (
+                    <p className="text-sm text-red-500 mt-1">{errorsBulk.defaultPermissions.message}</p>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="message">Custom Message (Optional)</Label>
+                <Textarea
+                  id="message"
+                  {...registerBulk("message")}
+                  placeholder="Add a custom message to include in the invitation email..."
+                  rows={3}
+                  className="w-full"
+                />
+              </div>
+
+              <div className="flex space-x-2">
+                <Button
+                  type="submit"
+                  disabled={bulkInviteMutation.isPending}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  <Mail className="w-4 h-4 mr-2" />
+                  {bulkInviteMutation.isPending ? "Sending Invites..." : "Send Invitations"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setIsBulkInviting(false);
+                    resetBulk();
+                  }}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </div>
+        )}
+
         {isAddingStakeholder && isAdmin && (
           <div className="mb-6 p-4 border rounded-lg bg-slate-50">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-medium text-slate-900">Add Individual Stakeholder</h3>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setIsAddingStakeholder(false);
+                  reset();
+                }}
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
