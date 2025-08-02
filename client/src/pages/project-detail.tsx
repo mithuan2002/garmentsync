@@ -9,6 +9,39 @@ import CommentSystem from "@/components/project/comment-system";
 import FileUpload from "@/components/project/file-upload";
 import { Progress } from "@/components/ui/progress";
 
+interface ProjectData {
+  id: string;
+  name: string;
+  description?: string;
+  status: string;
+  priority: string;
+  buyerName: string;
+  manufacturerName: string;
+  quantity?: number;
+  deadline?: string;
+  progress: number;
+  createdAt: string;
+  updatedAt: string;
+  comments: Comment[];
+  files: FileItem[];
+}
+
+interface Comment {
+  id: string;
+  message: string;
+  author: string;
+  role: string;
+  createdAt: string;
+}
+
+interface FileItem {
+  id: string;
+  fileName: string;
+  fileSize: number;
+  mimeType: string;
+  createdAt: string;
+}
+
 export default function ProjectDetail() {
   const [, params] = useRoute("/projects/:id");
   const projectId = params?.id;
@@ -17,7 +50,7 @@ export default function ProjectDetail() {
     queryKey: ["/api/auth/me"],
   });
 
-  const { data: project, isLoading } = useQuery({
+  const { data: project, isLoading } = useQuery<ProjectData>({
     queryKey: ["/api/projects", projectId],
     enabled: !!projectId,
   });

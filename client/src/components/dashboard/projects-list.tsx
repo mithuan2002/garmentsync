@@ -6,8 +6,22 @@ import { Progress } from "@/components/ui/progress";
 import { Plus, Calendar, User, MessageSquare, ChevronRight } from "lucide-react";
 import { Link } from "wouter";
 
+interface ProjectWithBuyer {
+  id: string;
+  name: string;
+  description: string;
+  status: string;
+  priority: string;
+  buyerName: string;
+  quantity?: number;
+  deadline?: string;
+  progress: number;
+  createdAt: string;
+  comments?: any[];
+}
+
 export default function ProjectsList() {
-  const { data: projects, isLoading } = useQuery({
+  const { data: projects, isLoading } = useQuery<ProjectWithBuyer[]>({
     queryKey: ["/api/projects"],
   });
 

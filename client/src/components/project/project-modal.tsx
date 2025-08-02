@@ -23,6 +23,39 @@ import FileUpload from "./file-upload";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
+interface ProjectModalData {
+  id: string;
+  name: string;
+  description?: string;
+  status: string;
+  priority: string;
+  buyerName: string;
+  manufacturerName: string;
+  quantity?: number;
+  deadline?: string;
+  progress: number;
+  createdAt: string;
+  updatedAt: string;
+  comments: Comment[];
+  files: FileItem[];
+}
+
+interface Comment {
+  id: string;
+  message: string;
+  author: string;
+  role: string;
+  createdAt: string;
+}
+
+interface FileItem {
+  id: string;
+  fileName: string;
+  fileSize: number;
+  mimeType: string;
+  createdAt: string;
+}
+
 interface ProjectModalProps {
   projectId: string | null;
   isOpen: boolean;
@@ -38,7 +71,7 @@ export default function ProjectModal({ projectId, isOpen, onClose }: ProjectModa
     queryKey: ["/api/auth/me"],
   });
 
-  const { data: project, isLoading } = useQuery({
+  const { data: project, isLoading } = useQuery<ProjectModalData>({
     queryKey: ["/api/projects", projectId],
     enabled: !!projectId && isOpen,
   });

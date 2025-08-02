@@ -2,8 +2,15 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { TrendingUp, Clock, MessageSquare, CheckCircle } from "lucide-react";
 
+interface DashboardStats {
+  activeProjects: number;
+  pendingUpdates: number;
+  messagesToday: number;
+  completedOrders: number;
+}
+
 export default function StatsCards() {
-  const { data: stats, isLoading } = useQuery({
+  const { data: stats, isLoading } = useQuery<DashboardStats>({
     queryKey: ["/api/dashboard/stats"],
   });
 

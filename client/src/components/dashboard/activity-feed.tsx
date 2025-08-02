@@ -2,8 +2,18 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MessageSquare, CheckCircle, Upload, AlertTriangle } from "lucide-react";
 
+interface Activity {
+  id: string;
+  type: string;
+  message: string;
+  userName: string;
+  userRole: string;
+  projectName: string;
+  createdAt: string;
+}
+
 export default function ActivityFeed() {
-  const { data: activities, isLoading } = useQuery({
+  const { data: activities, isLoading } = useQuery<Activity[]>({
     queryKey: ["/api/activity"],
   });
 

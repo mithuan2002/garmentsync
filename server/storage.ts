@@ -121,6 +121,7 @@ export class MemStorage implements IStorage {
     const user: User = {
       ...insertUser,
       id,
+      company: insertUser.company || null,
       createdAt: new Date(),
     };
     this.users.set(id, user);
@@ -143,6 +144,12 @@ export class MemStorage implements IStorage {
     const project: Project = {
       ...insertProject,
       id,
+      status: insertProject.status || "design",
+      priority: insertProject.priority || "medium",
+      progress: insertProject.progress || 0,
+      description: insertProject.description || null,
+      quantity: insertProject.quantity || null,
+      deadline: insertProject.deadline || null,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -175,6 +182,7 @@ export class MemStorage implements IStorage {
     const update: Update = {
       ...insertUpdate,
       id,
+      type: insertUpdate.type || "update",
       createdAt: new Date(),
     };
     this.updates.set(id, update);
